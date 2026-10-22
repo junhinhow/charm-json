@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func rowPaths(rows []Row) []string {
+func testRowPaths(rows []Row) []string {
 	paths := make([]string, len(rows))
 	for index, row := range rows {
 		paths[index] = row.Node.Path
@@ -14,7 +14,7 @@ func rowPaths(rows []Row) []string {
 }
 
 func TestFindJSONPointer(t *testing.T) {
-	root := mustParseJSON(t, `{
+	root := mustParseJSONForTest(t, `{
   "a": [{"b": 1}],
   "a~b": 2,
   "a/b": 3,
@@ -65,7 +65,7 @@ func TestFindJSONPointer(t *testing.T) {
 }
 
 func TestFindIgnoresCollapse(t *testing.T) {
-	root := mustParseJSON(t, `{"a":{"b":1}}`)
+	root := mustParseJSONForTest(t, `{"a":{"b":1}}`)
 	root.Collapse("/a")
 	if node, found := root.Find("/a/b"); !found || node.Value != "1" {
 		t.Errorf("Find após colapso = (%v, %v), quer 1", node, found)
@@ -73,11 +73,11 @@ func TestFindIgnoresCollapse(t *testing.T) {
 }
 
 func TestFlattenRespectsCollapse(t *testing.T) {
-	root := mustParseJSON(t, `{"a":{"b":{"c":1,"d":2}},"e":3}`)
+	root := mustParseJSONForTest(t, `{"a":{"b":{"c":1,"d":2}},"e":3}`)
 
 	rows := root.Flatten()
 	wantPaths := []string{"", "/a", "/a/b", "/a/b/c", "/a/b/d", "/e"}
-	if got := rowPaths(rows); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(rows); !reflect.DeepEqual(got, wantPaths) {
 		t.Fatalf("paths = %v, quer %v", got, wantPaths)
 	}
 	wantDepths := []int{0, 1, 2, 3, 3, 1}
@@ -96,7 +96,7 @@ func TestFlattenRespectsCollapse(t *testing.T) {
 	root.Collapse("/a")
 	rows = root.Flatten()
 	wantPaths = []string{"", "/a", "/e"}
-	if got := rowPaths(rows); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(rows); !reflect.DeepEqual(got, wantPaths) {
 		t.Fatalf("após colapsar /a: %v, quer %v", got, wantPaths)
 	}
 	if rows[1].Prefix != "▸ " {
@@ -111,7 +111,7 @@ func TestFlattenRespectsCollapse(t *testing.T) {
 	root.Toggle("/a/b")
 	rows = root.Flatten()
 	wantPaths = []string{"", "/a", "/a/b", "/e"}
-	if got := rowPaths(rows); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(rows); !reflect.DeepEqual(got, wantPaths) {
 		t.Fatalf("após colapsar /a/b: %v, quer %v", got, wantPaths)
 	}
 	if rows[2].Prefix != "▸ " {
@@ -120,7 +120,7 @@ func TestFlattenRespectsCollapse(t *testing.T) {
 }
 
 func TestCollapseMethodsAreSafe(t *testing.T) {
-	root := mustParseJSON(t, `{"a":{"b":1},"c":2}`)
+	root := mustParseJSONForTest(t, `{"a":{"b":1},"c":2}`)
 	var nilNode *Node
 	nilNode.Collapse("")
 	nilNode.Expand("")
@@ -160,7 +160,7 @@ func TestCollapseMethodsAreSafe(t *testing.T) {
 }
 
 func TestFlattenArrayIndicesAndEmptyContainers(t *testing.T) {
-	root := mustParseJSON(t, `{"lista":["á","😀"],"vazio":{},"vazia":[]}`)
+	root := mustParseJSONForTest(t, `{"lista":["á","😀"],"vazio":{},"vazia":[]}`)
 	rows := root.Flatten()
 	want := []string{
 		`{3}`,
@@ -181,7 +181,7 @@ func TestFlattenArrayIndicesAndEmptyContainers(t *testing.T) {
 }
 
 func TestFilterKeepsMatchesAndAncestors(t *testing.T) {
-	root := mustParseJSON(t, `{
+	root := mustParseJSONForTest(t, `{
   "alpha": {"beta": 1, "gamma": 2},
   "delta": {"beta": 3},
   "str": "BETA"
@@ -190,7 +190,7 @@ func TestFilterKeepsMatchesAndAncestors(t *testing.T) {
 
 	model.SetFilter("beta")
 	wantPaths := []string{"", "/alpha", "/alpha/beta", "/delta", "/delta/beta", "/str"}
-	if got := rowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
 		t.Fatalf("filtro beta = %v, quer %v", got, wantPaths)
 	}
 	if model.Rows()[0].Prefix != "▾ " {
@@ -198,24 +198,24 @@ func TestFilterKeepsMatchesAndAncestors(t *testing.T) {
 	}
 
 	model.SetFilter("BETA")
-	if got := rowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
 		t.Errorf("filtro case-insensitive = %v, quer %v", got, wantPaths)
 	}
 
 	model.SetFilter("2")
 	wantPaths = []string{"", "/alpha", "/alpha/gamma"}
-	if got := rowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
 		t.Errorf("filtro por valor = %v, quer %v", got, wantPaths)
 	}
 
 	model.SetFilter("/alpha/gamma")
-	if got := rowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
 		t.Errorf("filtro por caminho = %v, quer %v", got, wantPaths)
 	}
 
 	model.SetFilter("zzz")
 	if rows := model.Rows(); len(rows) != 0 {
-		t.Errorf("filtro sem match = %v, quer vazio", rowPaths(rows))
+		t.Errorf("filtro sem match = %v, quer vazio", testRowPaths(rows))
 	}
 
 	model.SetFilter("")
@@ -225,13 +225,13 @@ func TestFilterKeepsMatchesAndAncestors(t *testing.T) {
 }
 
 func TestFilterIgnoresCollapseWhileActive(t *testing.T) {
-	root := mustParseJSON(t, `{"alpha":{"beta":1,"gamma":2},"delta":3}`)
+	root := mustParseJSONForTest(t, `{"alpha":{"beta":1,"gamma":2},"delta":3}`)
 	root.Collapse("/alpha")
 	model := New(root)
 
 	model.SetFilter("gamma")
 	wantPaths := []string{"", "/alpha", "/alpha/gamma"}
-	if got := rowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
 		t.Fatalf("filtro com nó colapsado = %v, quer %v", got, wantPaths)
 	}
 	if model.Rows()[1].Prefix != "▾ " {
@@ -240,22 +240,22 @@ func TestFilterIgnoresCollapseWhileActive(t *testing.T) {
 
 	model.SetFilter("")
 	if rows := model.Rows(); len(rows) != 3 || rows[1].Prefix != "▸ " {
-		t.Errorf("colapso deveria voltar após limpar o filtro: %v", rowPaths(rows))
+		t.Errorf("colapso deveria voltar após limpar o filtro: %v", testRowPaths(rows))
 	}
 }
 
 func TestFilterEscapedKey(t *testing.T) {
-	root := mustParseJSON(t, `{"a/b":1}`)
+	root := mustParseJSONForTest(t, `{"a/b":1}`)
 	model := New(root)
 	model.SetFilter("a/b")
 	wantPaths := []string{"", "/a~1b"}
-	if got := rowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
+	if got := testRowPaths(model.Rows()); !reflect.DeepEqual(got, wantPaths) {
 		t.Errorf("filtro com chave escapada = %v, quer %v", got, wantPaths)
 	}
 }
 
 func TestSelectedHelpers(t *testing.T) {
-	root := mustParseJSON(t, `{"name":"charm","obj":{},"nil":null}`)
+	root := mustParseJSONForTest(t, `{"name":"charm","obj":{},"nil":null}`)
 	model := New(root)
 	model.SetSize(80, 10)
 
@@ -266,7 +266,7 @@ func TestSelectedHelpers(t *testing.T) {
 		t.Errorf("SelectedValue na raiz = (%q, %v), quer (\", false)", value, ok)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("j"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
 	if got := model.SelectedPath(); got != "/name" {
 		t.Errorf("SelectedPath = %q, quer /name", got)
 	}
@@ -274,12 +274,12 @@ func TestSelectedHelpers(t *testing.T) {
 		t.Errorf("SelectedValue = (%q, %v), quer (charm, true)", value, ok)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("j"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
 	if _, ok := model.SelectedValue(); ok {
 		t.Error("SelectedValue de contêiner deveria ser falso")
 	}
 
-	model, _ = applyKey(t, model, keyMsg("j"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
 	if value, ok := model.SelectedValue(); !ok || value != "null" {
 		t.Errorf("SelectedValue de null = (%q, %v), quer (null, true)", value, ok)
 	}

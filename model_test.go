@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-func keyMsg(text string) tea.KeyPressMsg {
+func testKeyMsg(text string) tea.KeyPressMsg {
 	runes := []rune(text)
 	var code rune
 	if len(runes) > 0 {
@@ -19,11 +19,11 @@ func keyMsg(text string) tea.KeyPressMsg {
 	return tea.KeyPressMsg{Code: code, Text: text}
 }
 
-func specialKeyMsg(code rune) tea.KeyPressMsg {
+func testSpecialKeyMsg(code rune) tea.KeyPressMsg {
 	return tea.KeyPressMsg{Code: code}
 }
 
-func applyKey(t *testing.T, model Model, msg tea.Msg) (Model, tea.Cmd) {
+func testApplyKey(t *testing.T, model Model, msg tea.Msg) (Model, tea.Cmd) {
 	t.Helper()
 	updated, cmd := model.Update(msg)
 	next, ok := updated.(Model)
@@ -34,99 +34,99 @@ func applyKey(t *testing.T, model Model, msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func TestNavigationKeys(t *testing.T) {
-	root := mustParseJSON(t, `{"k0":0,"k1":1,"k2":2,"k3":3,"k4":4}`)
+	root := mustParseJSONForTest(t, `{"k0":0,"k1":1,"k2":2,"k3":3,"k4":4}`)
 	model := New(root)
 	model.SetSize(80, 10)
 
-	model, _ = applyKey(t, model, keyMsg("j"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
 	if got := model.SelectedPath(); got != "/k0" {
 		t.Errorf("após j: %q, quer /k0", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyDown))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyDown))
 	if got := model.SelectedPath(); got != "/k1" {
 		t.Errorf("após ↓: %q, quer /k1", got)
 	}
-	model, _ = applyKey(t, model, keyMsg("k"))
+	model, _ = testApplyKey(t, model, testKeyMsg("k"))
 	if got := model.SelectedPath(); got != "/k0" {
 		t.Errorf("após k: %q, quer /k0", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyUp))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyUp))
 	if got := model.SelectedPath(); got != "" {
 		t.Errorf("após ↑: %q, quer raiz", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyUp))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyUp))
 	if got := model.SelectedPath(); got != "" {
 		t.Errorf("↑ no topo saiu da raiz: %q", got)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("G"))
+	model, _ = testApplyKey(t, model, testKeyMsg("G"))
 	if got := model.SelectedPath(); got != "/k4" {
 		t.Errorf("após G: %q, quer /k4", got)
 	}
-	model, _ = applyKey(t, model, keyMsg("j"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
 	if got := model.SelectedPath(); got != "/k4" {
 		t.Errorf("j no fim saiu da última linha: %q", got)
 	}
-	model, _ = applyKey(t, model, keyMsg("g"))
+	model, _ = testApplyKey(t, model, testKeyMsg("g"))
 	if got := model.SelectedPath(); got != "" {
 		t.Errorf("após g: %q, quer raiz", got)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("x"))
+	model, _ = testApplyKey(t, model, testKeyMsg("x"))
 	if got := model.SelectedPath(); got != "" {
 		t.Errorf("tecla desconhecida mudou a seleção: %q", got)
 	}
 }
 
 func TestToggleAndCollapseKeys(t *testing.T) {
-	root := mustParseJSON(t, `{"a":{"b":1},"c":2}`)
+	root := mustParseJSONForTest(t, `{"a":{"b":1},"c":2}`)
 	model := New(root)
 	model.SetSize(80, 10)
 
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyEnter))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyEnter))
 	if got := len(model.Rows()); got != 1 {
 		t.Fatalf("enter na raiz: %d linhas, quer 1", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeySpace))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeySpace))
 	if got := len(model.Rows()); got != 4 {
 		t.Fatalf("space na raiz: %d linhas, quer 4", got)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("j"))
-	model, _ = applyKey(t, model, keyMsg("h"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
+	model, _ = testApplyKey(t, model, testKeyMsg("h"))
 	if got := len(model.Rows()); got != 3 {
 		t.Fatalf("h em /a: %d linhas, quer 3", got)
 	}
-	model, _ = applyKey(t, model, keyMsg("l"))
+	model, _ = testApplyKey(t, model, testKeyMsg("l"))
 	if got := len(model.Rows()); got != 4 {
 		t.Fatalf("l em /a: %d linhas, quer 4", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeySpace))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeySpace))
 	if got := len(model.Rows()); got != 3 {
 		t.Fatalf("space em /a: %d linhas, quer 3", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyEnter))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyEnter))
 	if got := len(model.Rows()); got != 4 {
 		t.Fatalf("enter em /a: %d linhas, quer 4", got)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("G"))
+	model, _ = testApplyKey(t, model, testKeyMsg("G"))
 	path := model.SelectedPath()
-	model, _ = applyKey(t, model, keyMsg("h"))
+	model, _ = testApplyKey(t, model, testKeyMsg("h"))
 	if got := len(model.Rows()); got != 4 || model.SelectedPath() != path {
 		t.Errorf("h em folha alterou a árvore: %d linhas", got)
 	}
-	model, _ = applyKey(t, model, keyMsg("l"))
+	model, _ = testApplyKey(t, model, testKeyMsg("l"))
 	if got := len(model.Rows()); got != 4 {
 		t.Errorf("l em folha alterou a árvore: %d linhas", got)
 	}
 }
 
 func TestYankEmitsMessage(t *testing.T) {
-	root := mustParseJSON(t, `{"a":1}`)
+	root := mustParseJSONForTest(t, `{"a":1}`)
 	model := New(root)
 
-	_, cmd := applyKey(t, model, keyMsg("y"))
+	_, cmd := testApplyKey(t, model, testKeyMsg("y"))
 	if cmd == nil {
 		t.Fatal("y na raiz não devolveu comando")
 	}
@@ -139,8 +139,8 @@ func TestYankEmitsMessage(t *testing.T) {
 		t.Errorf("YankedMsg.Path = %q, quer vazio (raiz)", yanked.Path)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("j"))
-	model, cmd = applyKey(t, model, keyMsg("y"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
+	model, cmd = testApplyKey(t, model, testKeyMsg("y"))
 	if cmd == nil {
 		t.Fatal("y em /a não devolveu comando")
 	}
@@ -150,23 +150,23 @@ func TestYankEmitsMessage(t *testing.T) {
 	}
 
 	model.SetFilter("zzz")
-	if _, cmd := applyKey(t, model, keyMsg("y")); cmd != nil {
+	if _, cmd := testApplyKey(t, model, testKeyMsg("y")); cmd != nil {
 		t.Error("y sem linhas deveria devolver comando nil")
 	}
 }
 
 func TestSearchMode(t *testing.T) {
-	root := mustParseJSON(t, `{"alpha":{"beta":1,"gamma":2},"beta":3}`)
+	root := mustParseJSONForTest(t, `{"alpha":{"beta":1,"gamma":2},"beta":3}`)
 	model := New(root)
 	model.SetSize(80, 10)
 
-	model, _ = applyKey(t, model, keyMsg("/"))
+	model, _ = testApplyKey(t, model, testKeyMsg("/"))
 	if !model.searching || model.Filter() != "" {
 		t.Fatalf("após /: searching=%v filtro=%q", model.searching, model.Filter())
 	}
 
 	for _, char := range []string{"b", "e", "t", "a"} {
-		model, _ = applyKey(t, model, keyMsg(char))
+		model, _ = testApplyKey(t, model, testKeyMsg(char))
 	}
 	if got := model.Filter(); got != "beta" {
 		t.Fatalf("filtro digitado = %q, quer beta", got)
@@ -178,12 +178,12 @@ func TestSearchMode(t *testing.T) {
 		t.Errorf("linhas filtradas = %d, quer 4", len(model.Rows()))
 	}
 
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyBackspace))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyBackspace))
 	if got := model.Filter(); got != "bet" {
 		t.Errorf("após backspace = %q, quer bet", got)
 	}
 
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyEnter))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyEnter))
 	if model.searching {
 		t.Error("enter deveria encerrar o modo de busca")
 	}
@@ -191,59 +191,59 @@ func TestSearchMode(t *testing.T) {
 		t.Errorf("enter deveria manter o filtro, obteve %q", got)
 	}
 
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyEsc))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyEsc))
 	if model.Filter() != "" || model.searching {
 		t.Errorf("esc deveria limpar o filtro, obteve %q", model.Filter())
 	}
 
 	model.SetFilter("beta")
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyEsc))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyEsc))
 	if model.Filter() != "" {
 		t.Errorf("esc no modo normal não limpou o filtro: %q", model.Filter())
 	}
 }
 
 func TestSearchTypingDoesNotNavigate(t *testing.T) {
-	root := mustParseJSON(t, `{"a":1,"b":2}`)
+	root := mustParseJSONForTest(t, `{"a":1,"b":2}`)
 	model := New(root)
 
-	model, _ = applyKey(t, model, keyMsg("/"))
-	model, _ = applyKey(t, model, keyMsg("j"))
+	model, _ = testApplyKey(t, model, testKeyMsg("/"))
+	model, _ = testApplyKey(t, model, testKeyMsg("j"))
 	if got := model.Filter(); got != "j" {
 		t.Errorf("j na busca = %q, quer j", got)
 	}
 	if got := model.SelectedPath(); got != "" {
 		t.Errorf("j na busca moveu a seleção para %q", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeySpace))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeySpace))
 	if got := model.Filter(); got != "j " {
 		t.Errorf("espaço na busca = %q, quer \"j \"", got)
 	}
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyUp))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyUp))
 	if got := model.Filter(); got != "j " {
 		t.Errorf("seta na busca alterou o filtro para %q", got)
 	}
 
-	model, _ = applyKey(t, model, keyMsg("ã"))
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyBackspace))
+	model, _ = testApplyKey(t, model, testKeyMsg("ã"))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyBackspace))
 	if got := model.Filter(); got != "j " {
 		t.Errorf("backspace com unicode = %q, quer \"j \"", got)
 	}
 
-	model, _ = applyKey(t, model, tea.KeyPressMsg{Code: 'j', Text: "j", Mod: tea.ModCtrl})
+	model, _ = testApplyKey(t, model, tea.KeyPressMsg{Code: 'j', Text: "j", Mod: tea.ModCtrl})
 	if got := model.Filter(); got != "j " {
 		t.Errorf("ctrl+j alterou o filtro para %q", got)
 	}
 
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyEnter))
-	model, _ = applyKey(t, model, keyMsg("/"))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyEnter))
+	model, _ = testApplyKey(t, model, testKeyMsg("/"))
 	if got := model.Filter(); got != "" {
 		t.Errorf("nova busca deveria começar vazia, obteve %q", got)
 	}
 }
 
 func TestViewRespectsSizeAndWidth(t *testing.T) {
-	root := mustParseJSON(t, `{
+	root := mustParseJSONForTest(t, `{
   "long": "abcdefghijklmnopqrstuvwxyz0123456789",
   "emoji": "😀😀😀😀😀",
   "nested": {"ação": {"日本語": "テキスト"}},
@@ -355,11 +355,11 @@ func TestViewScrollsToSelection(t *testing.T) {
 		fmt.Fprintf(&source, `"k%02d":%d`, index, index)
 	}
 	source.WriteString("}")
-	root := mustParseJSON(t, source.String())
+	root := mustParseJSONForTest(t, source.String())
 
 	model := New(root, WithSyntaxColors(false))
 	model.SetSize(200, 5)
-	model, _ = applyKey(t, model, keyMsg("G"))
+	model, _ = testApplyKey(t, model, testKeyMsg("G"))
 	content := model.View().Content
 	if !strings.Contains(content, "k29: 29") {
 		t.Errorf("G não trouxe a última linha para a view: %q", content)
@@ -368,7 +368,7 @@ func TestViewScrollsToSelection(t *testing.T) {
 		t.Errorf("scroll gerou %d linhas, máximo 5", len(lines))
 	}
 
-	model, _ = applyKey(t, model, keyMsg("g"))
+	model, _ = testApplyKey(t, model, testKeyMsg("g"))
 	content = model.View().Content
 	if !strings.Contains(content, "k00: 0") || strings.Contains(content, "k29: 29") {
 		t.Errorf("g não voltou ao topo: %q", content)
@@ -376,7 +376,7 @@ func TestViewScrollsToSelection(t *testing.T) {
 }
 
 func TestViewDeterministic(t *testing.T) {
-	root := mustParseJSON(t, `{"a":{"b":[1,2,3]},"c":"texto","d":true,"e":null}`)
+	root := mustParseJSONForTest(t, `{"a":{"b":[1,2,3]},"c":"texto","d":true,"e":null}`)
 	model := New(root)
 	model.SetSize(80, 10)
 
@@ -387,16 +387,16 @@ func TestViewDeterministic(t *testing.T) {
 		}
 	}
 
-	firstPaths := rowPaths(model.Rows())
+	firstPaths := testRowPaths(model.Rows())
 	for render := 0; render < 100; render++ {
-		if got := rowPaths(model.Rows()); !equalStrings(got, firstPaths) {
+		if got := testRowPaths(model.Rows()); !testEqualStrings(got, firstPaths) {
 			t.Fatalf("Rows() divergiu no render %d", render)
 		}
 	}
 }
 
 func TestMaxDepth(t *testing.T) {
-	root := mustParseJSON(t, `{"a":{"b":{"c":{"d":1}}}}`)
+	root := mustParseJSONForTest(t, `{"a":{"b":{"c":{"d":1}}}}`)
 
 	unlimited := New(root)
 	unlimited.SetSize(80, 10)
@@ -412,7 +412,7 @@ func TestMaxDepth(t *testing.T) {
 	model = New(root, WithMaxDepth(2))
 	model.SetSize(80, 10)
 	rows := model.Rows()
-	if got := rowPaths(rows); !equalStrings(got, []string{"", "/a", "/a/b"}) {
+	if got := testRowPaths(rows); !testEqualStrings(got, []string{"", "/a", "/a/b"}) {
 		t.Fatalf("WithMaxDepth(2) = %v", got)
 	}
 	if rows[2].Display != "b: …" || rows[2].Prefix != "  " {
@@ -422,15 +422,15 @@ func TestMaxDepth(t *testing.T) {
 		t.Error("maxDepth não deveria remover nós do modelo")
 	}
 
-	model, _ = applyKey(t, model, keyMsg("G"))
-	model, _ = applyKey(t, model, specialKeyMsg(tea.KeyEnter))
+	model, _ = testApplyKey(t, model, testKeyMsg("G"))
+	model, _ = testApplyKey(t, model, testSpecialKeyMsg(tea.KeyEnter))
 	if got := len(model.Rows()); got != 3 {
 		t.Errorf("expandir nó truncado = %d linhas, quer 3", got)
 	}
 
 	one := New(root, WithMaxDepth(1))
 	rows = one.Rows()
-	if got := rowPaths(rows); !equalStrings(got, []string{"", "/a"}) {
+	if got := testRowPaths(rows); !testEqualStrings(got, []string{"", "/a"}) {
 		t.Errorf("WithMaxDepth(1) = %v", got)
 	}
 	if rows[1].valText != "…" {
@@ -439,10 +439,10 @@ func TestMaxDepth(t *testing.T) {
 }
 
 func TestFilterClampsSelection(t *testing.T) {
-	root := mustParseJSON(t, `{"k0":0,"k1":1,"k2":2,"k3":3}`)
+	root := mustParseJSONForTest(t, `{"k0":0,"k1":1,"k2":2,"k3":3}`)
 	model := New(root)
 	model.SetSize(80, 10)
-	model, _ = applyKey(t, model, keyMsg("G"))
+	model, _ = testApplyKey(t, model, testKeyMsg("G"))
 	if got := model.SelectedPath(); got != "/k3" {
 		t.Fatalf("G = %q, quer /k3", got)
 	}
@@ -456,7 +456,7 @@ func TestFilterClampsSelection(t *testing.T) {
 }
 
 func TestUpdateIgnoresOtherMessages(t *testing.T) {
-	root := mustParseJSON(t, `{"a":1}`)
+	root := mustParseJSONForTest(t, `{"a":1}`)
 	model := New(root)
 	model.SetSize(80, 10)
 	updated, cmd := model.Update(tea.WindowSizeMsg{Width: 10, Height: 10})
@@ -468,7 +468,7 @@ func TestUpdateIgnoresOtherMessages(t *testing.T) {
 	}
 }
 
-func equalStrings(left, right []string) bool {
+func testEqualStrings(left, right []string) bool {
 	if len(left) != len(right) {
 		return false
 	}

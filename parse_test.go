@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func mustParseJSON(t *testing.T, source string) *Node {
+func mustParseJSONForTest(t *testing.T, source string) *Node {
 	t.Helper()
 	node, err := ParseJSON([]byte(source))
 	if err != nil {
@@ -15,7 +15,7 @@ func mustParseJSON(t *testing.T, source string) *Node {
 	return node
 }
 
-func mustParseYAML(t *testing.T, source string) *Node {
+func mustParseYAMLForTest(t *testing.T, source string) *Node {
 	t.Helper()
 	node, err := ParseYAML([]byte(source))
 	if err != nil {
@@ -34,7 +34,7 @@ func TestParseJSONPreservesOrderAndTypes(t *testing.T) {
   "list": [1, "two", false, null],
   "nested": {"x": 1}
 }`
-	root := mustParseJSON(t, source)
+	root := mustParseJSONForTest(t, source)
 
 	if root.Kind != Object {
 		t.Fatalf("Kind da raiz = %v, quer %v", root.Kind, Object)
@@ -94,7 +94,7 @@ func TestParseJSONPreservesOrderAndTypes(t *testing.T) {
 }
 
 func TestParseJSONEscapedKeysAndUnicode(t *testing.T) {
-	root := mustParseJSON(t, `{"a\u00e7\u00e3o":"olá 😀","quote\"key":1}`)
+	root := mustParseJSONForTest(t, `{"a\u00e7\u00e3o":"olá 😀","quote\"key":1}`)
 	if len(root.Children) != 2 {
 		t.Fatalf("filhos = %d, quer 2", len(root.Children))
 	}
@@ -183,7 +183,7 @@ quoted: "true"
 flag: true
 empty:
 `
-	root := mustParseYAML(t, source)
+	root := mustParseYAMLForTest(t, source)
 	if root.Kind != Object {
 		t.Fatalf("raiz = %v, quer Object", root.Kind)
 	}
