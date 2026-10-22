@@ -403,7 +403,18 @@ func (m Model) renderPrompt() string {
 	if m.searching {
 		prompt += "█"
 	}
-	return ansi.Truncate(prompt, m.width, "…")
+	return ansi.Truncate(sanitizePrompt(prompt), m.width, "…")
+}
+
+// sanitizePrompt troca controles por espaço para que um filtro colado com
+// quebras de linha não aumente a quantidade de linhas da View.
+func sanitizePrompt(text string) string {
+	return strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7F {
+			return ' '
+		}
+		return r
+	}, text)
 }
 
 func styleText(text, style string) string {
