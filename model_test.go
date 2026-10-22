@@ -324,6 +324,17 @@ func TestViewRespectsSizeAndWidth(t *testing.T) {
 		}
 	}
 
+	model.SetFilter("a\nb\tc")
+	lines = strings.Split(model.View().Content, "\n")
+	if len(lines) > 3 {
+		t.Errorf("prompt com controles: %d linhas, máximo 3", len(lines))
+	}
+	for _, line := range lines {
+		if got := ansi.StringWidth(line); got > 20 {
+			t.Errorf("prompt com controles: %d células", got)
+		}
+	}
+
 	empty := New(nil)
 	empty.SetSize(80, 24)
 	if content := empty.View().Content; content != "" {

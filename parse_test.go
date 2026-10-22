@@ -152,6 +152,22 @@ func TestParseJSONTrailingContent(t *testing.T) {
 	}
 }
 
+func TestParseJSONRejectsMismatchedDelimiters(t *testing.T) {
+	for _, source := range []string{
+		`{"a":1]`,
+		`[1}`,
+		`{"a":1,}`,
+		`[1,]`,
+		`{"a" 1}`,
+		`{a:1}`,
+		`{"a":}`,
+	} {
+		if _, err := ParseJSON([]byte(source)); err == nil {
+			t.Errorf("ParseJSON(%q) aceitou JSON inválido", source)
+		}
+	}
+}
+
 func TestParseYAMLAnchorsOrderAndNesting(t *testing.T) {
 	source := `
 base: &base
